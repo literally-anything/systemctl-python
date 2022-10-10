@@ -2,6 +2,7 @@ import subprocess
 import time
 from enum import Enum
 from threading import Thread, Barrier, BrokenBarrierError, Lock
+from typing import Any, Callable
 
 
 class ServiceState(Enum):
@@ -23,9 +24,9 @@ class Service:
         self._update_barrier = Barrier(parties = 2)
         self._update_lock = Lock()
 
-        self.on_start: callable = None
-        self.on_stop: callable = None
-        self.on_fail: callable = None
+        self.on_start: Callable = None
+        self.on_stop: Callable = None
+        self.on_fail: Callable = None
 
     def close(self) -> None:
         self._shutdown = True
@@ -86,7 +87,7 @@ class Service:
         else:
             return ServiceState.OTHER
 
-    def _update_loop(self) -> None:
+    def _update_loop(self) -> Any:
         while not self._shutdown:
             try:
                 self._update_barrier.wait(0)
@@ -136,6 +137,6 @@ class Service:
             return False
 
     @staticmethod
-    def _run_callback(callback: callable) -> any:
+    def _run_callback(callback: Callable) -> Any:
         if callback is not None:
             return callback()
