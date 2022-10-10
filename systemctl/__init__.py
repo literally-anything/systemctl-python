@@ -23,6 +23,10 @@ class Service:
         self._update_barrier = Barrier(parties = 2)
         self._update_lock = Lock()
 
+        self.on_start: callable = None
+        self.on_stop: callable = None
+        self.on_fail: callable = None
+
     def close(self) -> None:
         self._shutdown = True
         if self._update_thread is not None and self._update_thread.is_alive():
@@ -89,7 +93,19 @@ class Service:
             except BrokenBarrierError:
                 self._update_barrier.reset()
 
-            self._state = self._get_state()
+            new_state = self._get_state()
+            is_active = self._state == ServiceState.ACTIVE
+            is_failed = self._state == ServiceState.FAILED
+
+            if is_active and not self._is_active:
+                self._run_callback(self.on_start)
+            elif not is_active and self._is_active:
+                self._run_callback(self.on_stop)
+
+            if is_failed and not self._is_failed:
+                self._run_callback(self.on_fail)
+
+            self._state = new_state
             self._is_active = self._state == ServiceState.ACTIVE
             self._is_failed = self._state == ServiceState.FAILED
 
@@ -118,3 +134,8 @@ class Service:
             return ret_code == 0
         except subprocess.TimeoutExpired:
             return False
+
+    @staticmethod
+    def _run_callback(callback: callable) -> any:
+        if callback is not None:
+            return callback()
