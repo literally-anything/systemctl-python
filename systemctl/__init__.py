@@ -98,7 +98,7 @@ class Service:
             is_failed = self._state == ServiceState.FAILED
 
             if is_active is not self._is_active:
-                self.on_state()
+                self.on_state(is_active)
             if is_failed and not self._is_failed:
                 self.on_fail()
 
