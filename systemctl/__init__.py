@@ -24,7 +24,7 @@ class Service:
         self._update_barrier = Barrier(parties = 2)
         self._update_lock = Lock()
 
-        self.on_state: Callable = lambda: None
+        self.on_state: Callable = lambda state: None
         self.on_fail: Callable = lambda: None
 
     def close(self) -> None:
@@ -94,8 +94,8 @@ class Service:
                 self._update_barrier.reset()
 
             new_state = self._get_state()
-            is_active = self._state == ServiceState.ACTIVE
-            is_failed = self._state == ServiceState.FAILED
+            is_active = new_state == ServiceState.ACTIVE
+            is_failed = new_state == ServiceState.FAILED
 
             if is_active is not self._is_active:
                 self.on_state(is_active)
@@ -103,8 +103,8 @@ class Service:
                 self.on_fail()
 
             self._state = new_state
-            self._is_active = self._state == ServiceState.ACTIVE
-            self._is_failed = self._state == ServiceState.FAILED
+            self._is_active = is_active
+            self._is_failed = is_failed
 
             time.sleep(0.5)
 
