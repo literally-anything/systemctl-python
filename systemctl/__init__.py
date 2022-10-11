@@ -24,9 +24,9 @@ class Service:
         self._update_barrier = Barrier(parties = 2)
         self._update_lock = Lock()
 
-        self.on_start: Callable = None
-        self.on_stop: Callable = None
-        self.on_fail: Callable = None
+        self.on_start: Callable = lambda: None
+        self.on_stop: Callable = lambda: None
+        self.on_fail: Callable = lambda: None
 
     def close(self) -> None:
         self._shutdown = True
@@ -99,12 +99,12 @@ class Service:
             is_failed = self._state == ServiceState.FAILED
 
             if is_active and not self._is_active:
-                self._run_callback(self.on_start)
+                self.on_start()
             elif not is_active and self._is_active:
-                self._run_callback(self.on_stop)
+                self.on_stop()
 
             if is_failed and not self._is_failed:
-                self._run_callback(self.on_fail)
+                self.on_fail()
 
             self._state = new_state
             self._is_active = self._state == ServiceState.ACTIVE
@@ -135,8 +135,3 @@ class Service:
             return ret_code == 0
         except subprocess.TimeoutExpired:
             return False
-
-    @staticmethod
-    def _run_callback(callback: Callable) -> Any:
-        if callback is not None:
-            return callback()
