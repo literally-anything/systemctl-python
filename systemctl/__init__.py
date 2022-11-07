@@ -34,7 +34,7 @@ class Service:
 
     def _check_thread(self) -> bool:
         return_value = True
-        self._update_lock.acquire(blocking = True, timeout = 4)
+        self._update_lock.acquire(blocking = True, timeout = 10)
         if not self._update_thread.is_alive():
             self._update_thread = Thread(target = self._update_loop, daemon = True)
             self._update_thread.start()
